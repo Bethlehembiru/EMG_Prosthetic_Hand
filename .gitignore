@@ -1,0 +1,65 @@
+# -----------------------------
+# Virtual environments
+# -----------------------------
+.venv/
+venv/
+env/
+
+# -----------------------------
+# Python cache / compiled files
+# -----------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# -----------------------------
+# Distribution / packaging
+# -----------------------------
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# -----------------------------
+# Logs and temp files
+# -----------------------------
+*.log
+*.tmp
+*.swp
+*.bak
+
+# -----------------------------
+# PyCharm / IDE settings
+# -----------------------------
+.idea/
+*.iml
+
+# -----------------------------
+# Jupyter notebooks
+# -----------------------------
+.ipynb_checkpoints/
+
+# -----------------------------
+# OS junk
+# -----------------------------
+.DS_Store
+Thumbs.db
+
+# -----------------------------
+# Data files (optional – for EMG experiments)
+# Uncomment if you don't want raw data in Git
+# -----------------------------
+# data/
+# recordings/
+# *.csv
+# *.mat
+# *.edf
+
+# -----------------------------
+# Model outputs
+# -----------------------------
+# models/
+# checkpoints/
+# *.h5
+# *.pt
