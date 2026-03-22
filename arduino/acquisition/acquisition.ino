@@ -1,41 +1,63 @@
 #include <MyoWare.h>
 
-// MyoWare class object
 MyoWare myoware;
 
-// the setup routine runs once when you press reset:
-void setup() 
-{
-  // initialize serial communication at 9600 bits per second:
-  Serial.begin(9600);
+// CONFIG
+const int BAUD_RATE = 115200;
+const int SAMPLE_RATE = 1000;
+const long SAMPLE_INTERVAL = 1000000 / SAMPLE_RATE;
 
-  // output conversion parameters - modify these values to match your setup
-  myoware.setConvertOutput(true);     // Set to true to convert ADC output to the amplitude of
-                                      // of the muscle activity as it appears at the electrodes
-                                      // in millivolts
-  myoware.setADCResolution(12.);      // ADC bits (shield default = 12-bit)
-  myoware.setADCVoltage(3.3);         // ADC reference voltage (shield default = 3.3V)
-  myoware.setGainPotentiometer(50.);  // Gain potentiometer resistance in kOhms.
-                                      // adjust the potentiometer setting such that the
-                                      // max muscle reading is below 3.3V then update this
-                                      // parameter to the measured value of the potentiometer
-  myoware.setENVPin(A0);              // Arduino pin connected to ENV
-  myoware.setRAWPin(A1);              // Arduino pin connected to RAW
-  myoware.setREFPin(A2);              // Arduino pin connected to REF
-  myoware.setRECTPin(A3);             // Arduino pin connected to RECT
+unsigned long previousMicros = 0;
+bool isStreaming = false;
+
+void setup()
+{
+  Serial.begin(BAUD_RATE);
+  while (!Serial);
+
+  // MyoWare setup
+  myoware.setConvertOutput(false);   // IMPORTANT → raw ADC
+  myoware.setRAWPin(A1);
+
+  Serial.println("READY");
 }
 
-// the loop routine runs over and over again forever:
-void loop() 
+void loop()
 {
-  // read the sensor's analog output pins  
-  const double envMillivolts = myoware.readSensorOutput(MyoWare::ENVELOPE);
-  const double rawMillivolts = myoware.readSensorOutput(MyoWare::RAW);
-  const double rectMillivolts = myoware.readSensorOutput(MyoWare::RECTIFIED);
-  
-  // print output in millivolts:
-  Serial.print(envMillivolts);
-  Serial.print(",");
-  Serial.print(rawMillivolts);
-  Serial.print(",");
-  Serial.println(rectMillivolts);
+  handleSerial();
+
+  if (!isStreaming) return;
+
+  unsigned long currentMicros = micros();
+
+  if (currentMicros - previousMicros >= SAMPLE_INTERVAL)
+  {
+    previousMicros += SAMPLE_INTERVAL;
+
+    int rawValue = analogRead(A1);   // direct RAW read
+
+    Serial.println(rawValue);
+  }
+}
+
+// COMMAND HANDLER
+void handleSerial()
+{
+  if (Serial.available())
+  {
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+
+    if (cmd == "START")
+    {
+      isStreaming = true;
+      previousMicros = micros();
+      Serial.println("STREAMING");
+    }
+    else if (cmd == "STOP")
+    {
+      isStreaming = false;
+      Serial.println("STOPPED");
+    }
+  }
+}
