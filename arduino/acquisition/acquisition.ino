@@ -1,5 +1,4 @@
 #include <MyoWare.h>
-
 MyoWare myoware;
 
 // CONFIG
@@ -7,23 +6,22 @@ const int BAUD_RATE = 115200;
 const int SAMPLE_RATE = 1000;
 const long SAMPLE_INTERVAL = 1000000 / SAMPLE_RATE;
 
+const int EMG_PIN = A1;
+
 unsigned long previousMicros = 0;
 bool isStreaming = false;
 
-void setup()
-{
+void setup(){
   Serial.begin(BAUD_RATE);
-  while (!Serial);
 
   // MyoWare setup
-  myoware.setConvertOutput(false);   // IMPORTANT → raw ADC
-  myoware.setRAWPin(A1);
+  myoware.setConvertOutput(false);
+  myoware.setRAWPin(EMG_PIN);
 
   Serial.println("READY");
 }
 
-void loop()
-{
+void loop(){
   handleSerial();
 
   if (!isStreaming) return;
@@ -34,15 +32,13 @@ void loop()
   {
     previousMicros += SAMPLE_INTERVAL;
 
-    int rawValue = analogRead(A1);   // direct RAW read
-
+    int rawValue = analogRead(EMG_PIN);
     Serial.println(rawValue);
   }
 }
 
 // COMMAND HANDLER
-void handleSerial()
-{
+void handleSerial(){
   if (Serial.available())
   {
     String cmd = Serial.readStringUntil('\n');
