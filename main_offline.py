@@ -1,4 +1,4 @@
-# main.py
+# main_offline.py
 
 from semg.acquisition.serial_reader import SerialReader
 from semg.buffer.buffer import Buffer
