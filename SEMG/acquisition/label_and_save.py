@@ -1,7 +1,7 @@
 import time
 import os
 import numpy as np
-from fake_serial_reader import EMGSerialReader  # assuming the reader is in acquisition folder
+from .fake_serial_reader import EMGSerialReader  # assuming the reader is in acquisition folder
 
 # ===== SETTINGS =====
 SAMPLE_RATE = 1000  # Hz
