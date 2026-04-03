@@ -5,6 +5,8 @@ import numpy as np
 import os
 from scipy.signal import butter, filtfilt, iirnotch
 
+from SEMG.acquisition.label_and_save import labels
+
 
 class EMGFilter:
 
@@ -75,7 +77,7 @@ class EMGFilter:
             filename = os.path.join(save_subdir, f"{gesture}_{int(np.floor(np.random.rand() * 1e6))}.npz")
 
             # Save only the envelope by default
-            np.savez(filename, envelope=envelope)
+            np.savez(filename, envelope=envelope, labels = labels)
             print(f"Processed signal saved at: {filename}")
 
         # -----------------------------
