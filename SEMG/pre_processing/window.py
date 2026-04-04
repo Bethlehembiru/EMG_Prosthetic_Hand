@@ -2,30 +2,16 @@ import numpy as np
 
 
 class WindowSegmenter:
-    def __init__(self, window_size=250, overlap=0.5, reject_label=-1):
-        """
-        window_size : int
-            Number of samples per window
-        overlap : float
-            Fraction of overlap (0–1)
-        reject_label : int
-            Label to reject (e.g., transition = -1)
-        """
+    def init(self, window_size=250, overlap=0.5, reject_label=-1):
         self.window_size = window_size
         self.step_size = int(window_size * (1 - overlap))
         self.reject_label = reject_label
 
-    def segment(self, signal, labels = None):
+    def segment(self, signal, labels=None):
         """
-        Segment signal into overlapping windows and assign labels.
-
-        Parameters:
-            signal : 1D numpy array
-            labels : 1D numpy array
-
-        Returns:
-            windows : (N, window_size)
-            window_labels : (N,)
+        Works for:
+        - Training (labels provided)
+        - Inference (labels=None)
         """
 
         windows = []
@@ -35,26 +21,38 @@ class WindowSegmenter:
 
         while start + self.window_size <= len(signal):
             end = start + self.window_size
-
             window = signal[start:end]
-            window_lbl = labels[start:end]
 
-            # Reject transition windows
-            if self.reject_label in window_lbl:
-                start += self.step_size
-                continue
+            # -------------------------
+            # TRAINING MODE (with labels)
+            # -------------------------
+            if labels is not None:
+                window_lbl = labels[start:end]
 
-            # Reject mixed labels (clean training data)
-            if len(np.unique(window_lbl)) > 1:
-                start += self.step_size
-                continue
+                # Reject transition
+                if self.reject_label in window_lbl:
+                    start += self.step_size
+                    continue
 
-            # All labels same → pick first
-            final_label = window_lbl[0]
+                # Reject mixed labels
+                if len(np.unique(window_lbl)) > 1:
+                    start += self.step_size
+                    continue
 
-            windows.append(window)
-            window_labels.append(final_label)
+                final_label = window_lbl[0]
+                windows.append(window)
+                window_labels.append(final_label)
+
+            # -------------------------
+            # INFERENCE MODE (no labels)
+            # -------------------------
+            else:
+                windows.append(window)
 
             start += self.step_size
 
-        return np.array(windows), np.array(window_labels)
+        # Return format depends on mode
+        if labels is not None:
+            return np.array(windows), np.array(window_labels)
+        else:
+            return np.array(windows), None
