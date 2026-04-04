@@ -21,3 +21,4 @@ combined = np.column_stack((signals, labels))
 np.savetxt(csv_path, combined, delimiter=",", header="signal,label", comments="")
 
 print("Saved to:", csv_path)
+print("...")

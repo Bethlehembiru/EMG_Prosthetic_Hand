@@ -3,16 +3,14 @@ import numpy as np
 
 
 class EMGBuffer:
-
-    def __init__(self, window_size=200):
-        self.window_size = window_size
-        self.buffer = deque(maxlen=window_size)
+    def __init__(self, max_size=10000):
+        self.buffer = deque(maxlen=max_size)
 
     def add_sample(self, sample):
         self.buffer.append(sample)
 
-    def is_full(self):
-        return len(self.buffer) == self.window_size
-
-    def get_window(self):
+    def get_data(self):
         return np.array(self.buffer)
+
+    def size(self):
+        return len(self.buffer)
