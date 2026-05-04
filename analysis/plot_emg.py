@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 # ================= LOAD FILE =================
 file_path = input("Enter full path to .npz file:\n")
 
