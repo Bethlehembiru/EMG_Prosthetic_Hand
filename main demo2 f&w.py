@@ -3,8 +3,8 @@ from SEMG.features.extractor import EMGFeatureExtractor
 import numpy as np
 import os
 
-DATA_DIR = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\data\processed"
-SAVE_DIR = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\data\features"
+DATA_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\processed"
+SAVE_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\features"
 
 os.makedirs(SAVE_DIR, exist_ok=True)
 

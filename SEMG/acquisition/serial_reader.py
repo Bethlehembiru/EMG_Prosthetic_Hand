@@ -4,41 +4,27 @@ import time
 
 class EMGSerialReader:
 
-    def __init__(self, port='COM3', baudrate=115200):
-
+    def __init__(self, port='COM3', baudrate=9600):
         self.ser = serial.Serial(port, baudrate, timeout=1)
+
+        # Give Arduino time to reset
         time.sleep(2)
+        self.ser.reset_input_buffer()
 
-        self._initialize()
-
-    def _initialize(self):
-
-        print("Waiting for Arduino...")
-
-        while True:
-            line = self.ser.readline().decode().strip()
-
-            if line == "READY":
-                print("Arduino READY")
-                break
-
-        self.ser.write(b"START\n")
-
-        while True:
-            line = self.ser.readline().decode().strip()
-
-            if line == "STREAMING":
-                print("Streaming started")
-                break
+        print("Serial connection established.")
 
     def read_sample(self):
-
         try:
-            line = self.ser.readline().decode().strip()
+            line = self.ser.readline().decode(errors='ignore').strip()
 
-            if line.isdigit():
+            print("RAW:", line)
+
+            if not line:
+                return None
+
+            try:
                 return int(line)
-            else:
+            except ValueError:
                 return None
 
         except:

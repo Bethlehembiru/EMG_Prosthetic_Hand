@@ -2,8 +2,8 @@ import numpy as np
 import os
 from SEMG.pre_processing.filters import EMGFilter
 
-base_dir = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\data\raw"
-save_dir = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\data\processed"
+base_dir = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\raw"
+save_dir = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\processed"
 
 emg_filter = EMGFilter(fs=1000)
 

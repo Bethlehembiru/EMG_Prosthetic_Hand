@@ -1,7 +1,7 @@
 import time
 
 # Core modules
-from SEMG.acquisition.fake_serial_reader import EMGSerialReader
+from SEMG.acquisition.serial_reader import EMGSerialReader
 from SEMG.buffer.buffer import EMGBuffer
 from SEMG.pre_processing.filters import EMGFilter
 from SEMG.pre_processing.window import WindowSegmenter
@@ -10,7 +10,7 @@ from SEMG.features.extractor import EMGFeatureExtractor
 # Model
 from joblib import load
 
-# Controller (this is the new piece you asked for)
+
 from SEMG.control.hand_control import HandController
 
 

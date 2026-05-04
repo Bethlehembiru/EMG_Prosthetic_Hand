@@ -9,8 +9,8 @@ from SEMG.classification.classifier import EMGClassifier
 # -----------------------------
 # PATHS (SOURCE + SAVE)
 # -----------------------------
-FEATURE_DIR = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\data\features"
-SAVE_DIR = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\models"
+FEATURE_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\features"
+SAVE_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\models"
 
 os.makedirs(SAVE_DIR, exist_ok=True)
 
