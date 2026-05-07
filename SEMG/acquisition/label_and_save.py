@@ -20,7 +20,7 @@ LABELS = {
 
 # ================= INPUT =================
 participant = input("Participant ID: ")
-gesture = input("Gesture (close/open/point): ").lower()
+gesture = input("Gesture (close/open/point): ").strip().lower()
 
 if gesture not in ["close", "open", "point"]:
     raise ValueError("Invalid gesture.")
