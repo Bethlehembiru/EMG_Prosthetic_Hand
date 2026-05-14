@@ -1,42 +1,29 @@
-import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-# ================= LOAD FILE =================
-file_path = input("Enter full path to .npz file:\n")
+file_path = input("Enter .npz file path:\n")
 
 data = np.load(file_path)
 
-raw = data["data"]          # your EMG signal
-labels = data["labels"]     # optional
+raw = data["data"]
+labels = data["labels"]
 
-# ================= TIME AXIS =================
-t = np.arange(len(raw))
+t = np.arange(len(raw))  # SIMPLE AND CORRECT
 
-# ================= PLOT RAW =================
-plt.figure()
-plt.plot(t, raw)
-plt.title("RAW EMG Signal")
-plt.xlabel("Samples")
+plt.figure(figsize=(14,6))
+
+plt.plot(t, raw, linewidth=1, label="EMG Signal")
+
+plt.scatter(t[labels == 1], raw[labels == 1], color="black", s=8, label="Close")
+plt.scatter(t[labels == 2], raw[labels == 2], color="green", s=8, label="Open")
+plt.scatter(t[labels == 3], raw[labels == 3], color="orange", s=8, label="Point")
+plt.scatter(t[labels == 4], raw[labels == 4], color="pink", s=8, label="Half Close")
+plt.scatter(t[labels == -1], raw[labels == -1], color="red", s=10, marker="x", label="Transition")
+
+plt.title("EMG Signal (Amplitude vs Time)")
+plt.xlabel("Samples (time index)")
 plt.ylabel("Amplitude")
 plt.grid()
-
-# ================= OPTIONAL: LABEL VIEW =================
-plt.figure()
-plt.plot(t, raw, label="EMG")
-
-plt.scatter(
-    t[labels == 1],
-    raw[labels == 1],
-    label="Gesture",
-    s=5
-)
-
-plt.title("EMG with Labels")
-plt.xlabel("Samples")
-plt.ylabel("Amplitude")
 plt.legend()
-plt.grid()
 
 plt.show()

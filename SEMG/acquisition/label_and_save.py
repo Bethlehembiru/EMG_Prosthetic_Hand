@@ -4,207 +4,161 @@ import numpy as np
 from serial_reader import EMGSerialReader
 
 # ================= SETTINGS =================
+
 REST_TIME = 3
-TRANSITION_TIME = 0.5
 ACTIVE_TIME = 3
+TRANSITION_TIME = 0.5
 COUNTDOWN_TIME = 3
-CYCLES = 20
+CYCLES = 10
 
 LABELS = {
     "rest": 0,
     "close": 1,
+    "half_close": 4,
     "open": 2,
     "point": 3,
     "transition": -1
 }
 
-# ================= INPUT =================
-participant = input("Participant ID: ")
-gesture = input("Gesture (close/open/point): ").strip().lower()
+# ================= USER INPUT =================
 
-if gesture not in ["close", "open", "point"]:
-    raise ValueError("Invalid gesture.")
+participant = input("Participant ID: ")
+gesture = input("Gesture (close/open/point/half_close): ").strip().lower()
+
+if gesture not in LABELS:
+    raise ValueError("Invalid gesture")
 
 # ================= SAVE DIRECTORY =================
-BASE_SAVE_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\raw"
 
-save_dir = os.path.join(BASE_SAVE_DIR, f"participant_{participant}")
+save_dir = os.path.join(
+    r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\raw",
+    f"participant_{participant}"
+)
+
 os.makedirs(save_dir, exist_ok=True)
 
-# ================= SERIAL INIT =================
+# ================= SERIAL CONNECTION =================
+
 reader = EMGSerialReader(port='COM3', baudrate=9600)
 
-print("\nSerial connection established.")
-
 # ================= BASELINE CALIBRATION =================
-print("\n===================================")
-print("BASELINE CALIBRATION")
-print("KEEP MUSCLE RELAXED")
-print("===================================")
 
+print("\nCalibrating baseline...")
 time.sleep(2)
 
-cal_samples = []
+cal = []
 
-for _ in range(200):
+for _ in range(300):
 
-    val = reader.read_sample()
+    v = reader.read_sample()
 
-    if val is not None:
-        cal_samples.append(val)
+    if v is not None:
+        cal.append(v)
 
-if len(cal_samples) == 0:
-    raise Exception("No EMG signal detected during calibration.")
+baseline = np.mean(cal)
 
-baseline = np.mean(cal_samples)
+print(f"Baseline: {baseline:.2f}")
 
-print(f"\nBaseline locked at: {baseline:.2f}")
+# ================= DATA STORAGE =================
 
-# Flush noise
-for _ in range(50):
-    reader.read_sample()
-
-# ================= STORAGE =================
 samples = []
 labels = []
 
-# ================= HELPER FUNCTIONS =================
-def countdown(message):
+# ================= FUNCTIONS =================
 
-    print(f"\n{message}")
+def clear_buffer():
+    """
+    Remove old serial data gathered
+    during countdown.
+    """
+    reader.ser.reset_input_buffer()
+
+def countdown(msg, cycle_num):
+
+    print(f"\n===== CYCLE {cycle_num}/{CYCLES} =====")
+    print(msg)
 
     for i in range(COUNTDOWN_TIME, 0, -1):
+
         print(i)
         time.sleep(1)
 
+    # Remove stale samples
+    clear_buffer()
 
-def collect_phase(duration, label, phase_name):
+def collect(duration, label, name):
+
+    print(f"\nCollecting: {name}")
 
     start = time.time()
 
     while time.time() - start < duration:
 
-        val = reader.read_sample()
+        v = reader.read_sample()
 
-        if val is None:
+        if v is None:
             continue
 
-        corrected = val - baseline
+        processed = v - baseline
 
-        samples.append(corrected)
+        samples.append(processed)
         labels.append(label)
 
-        print(f"{corrected:.2f} , {phase_name}")
+        print(f"{processed:.2f}, {name}")
 
+def transition():
 
-# ================= START =================
-print("\n===================================")
-print("GUIDED EMG ACQUISITION STARTED")
-print(f"Gesture : {gesture.upper()}")
-print(f"Cycles  : {CYCLES}")
-print("===================================")
+    collect(
+        TRANSITION_TIME,
+        LABELS["transition"],
+        "TRANSITION"
+    )
 
-try:
+# ================= MAIN LOOP =================
 
-    for cycle in range(CYCLES):
+for c in range(CYCLES):
 
-        current_cycle = cycle + 1
+    cycle_num = c + 1
 
-        print("\n===================================")
-        print(f"CYCLE {current_cycle} / {CYCLES}")
-        print("===================================")
+    # ---------- REST ----------
 
-        # ==================================================
-        # PREPARE FOR REST
-        # ==================================================
-        countdown(
-            f"Prepare to REST\n"
-            f"Upcoming Phase: REST\n"
-            f"Cycle {current_cycle}/{CYCLES}"
-        )
+    countdown("Prepare REST", cycle_num)
 
-        print("\nREST")
+    # transition AFTER countdown but BEFORE rest
+    transition()
 
-        collect_phase(
-            REST_TIME,
-            LABELS["rest"],
-            "REST"
-        )
+    collect(
+        REST_TIME,
+        LABELS["rest"],
+        "REST"
+    )
 
-        # ==================================================
-        # TRANSITION TO ACTIVE
-        # ==================================================
-        print("\nTRANSITION")
+    # ---------- ACTIVE GESTURE ----------
 
-        collect_phase(
-            TRANSITION_TIME,
-            LABELS["transition"],
-            "TRANSITION"
-        )
+    countdown(
+        f"Prepare {gesture.upper()}",
+        cycle_num
+    )
 
-        # ==================================================
-        # PREPARE FOR CONTRACTION
-        # ==================================================
-        countdown(
-            f"Prepare to CONTRACT\n"
-            f"Gesture: {gesture.upper()}\n"
-            f"Cycle {current_cycle}/{CYCLES}"
-        )
+    # transition AFTER countdown but BEFORE contraction
+    transition()
 
-        print(f"\nCONTRACT -> {gesture.upper()}")
+    collect(
+        ACTIVE_TIME,
+        LABELS[gesture],
+        gesture.upper()
+    )
 
-        collect_phase(
-            ACTIVE_TIME,
-            LABELS[gesture],
-            gesture.upper()
-        )
+# ================= SAVE DATA =================
 
-        # ==================================================
-        # TRANSITION TO REST
-        # ==================================================
-        print("\nRELAX")
+samples = np.array(samples, dtype=np.float32)
+labels = np.array(labels, dtype=np.int8)
 
-        collect_phase(
-            TRANSITION_TIME,
-            LABELS["transition"],
-            "TRANSITION"
-        )
+file = os.path.join(
+    save_dir,
+    f"{gesture}_{int(time.time())}.npz"
+)
 
-    print("\n===================================")
-    print("ACQUISITION COMPLETE")
-    print("===================================")
+np.savez(file, data=samples, labels=labels)
 
-except KeyboardInterrupt:
-
-    print("\nAcquisition interrupted by user.")
-
-except Exception as e:
-
-    print("\nError:", e)
-
-finally:
-
-    print("\nSaving data...")
-
-    if len(samples) == 0:
-
-        print("WARNING: No samples collected.")
-
-    else:
-
-        samples = np.array(samples, dtype=np.float32)
-        labels = np.array(labels, dtype=np.int8)
-
-        filename = os.path.join(
-            save_dir,
-            f"{gesture}_{int(time.time())}.npz"
-        )
-
-        np.savez(
-            filename,
-            data=samples,
-            labels=labels
-        )
-
-        print(f"\nSaved {len(samples)} samples")
-        print(f"Saved to:\n{filename}")
+print("\nSaved:", file)
