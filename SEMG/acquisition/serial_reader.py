@@ -4,7 +4,7 @@ import time
 
 class EMGSerialReader:
 
-    def __init__(self, port='COM3', baudrate=9600):
+    def __init__(self, port='COM4', baudrate=9600):
         self.ser = serial.Serial(port, baudrate, timeout=1)
 
         # Give Arduino time to reset

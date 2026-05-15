@@ -31,7 +31,7 @@ if gesture not in LABELS:
 # ================= SAVE DIRECTORY =================
 
 save_dir = os.path.join(
-    r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\raw",
+    r"C:\Users\lukma\Desktop\hand\EMG_Prosthetic_Hand\data\raw",
     f"participant_{participant}"
 )
 
@@ -39,7 +39,7 @@ os.makedirs(save_dir, exist_ok=True)
 
 # ================= SERIAL CONNECTION =================
 
-reader = EMGSerialReader(port='COM3', baudrate=9600)
+reader = EMGSerialReader(port='COM4', baudrate=9600)
 
 # ================= BASELINE CALIBRATION =================
 
