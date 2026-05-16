@@ -7,8 +7,8 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 # SETTINGS
 # ==============================
 FEATURES_DIR = "data/features"  # where your test feature files are stored
-MODEL_PATH = "data/models/classifier.joblib"
-SCALER_PATH = "data/models/scaler.joblib"
+MODEL_PATH = "data/models1/classifier.joblib"
+SCALER_PATH = "data/models1/scaler.joblib"
 
 # ==============================
 # LOAD TEST DATA

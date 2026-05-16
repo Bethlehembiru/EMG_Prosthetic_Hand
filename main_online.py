@@ -17,7 +17,7 @@ from SEMG.control.hand_control import HandController
 # ----------------------------
 # Load trained model
 # ----------------------------
-model = load("models/svm.joblib")  # or lda / knn
+model = load("models1/svm.joblib")  # or lda / knn
 
 
 # ----------------------------

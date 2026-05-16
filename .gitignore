@@ -59,7 +59,7 @@ Thumbs.db
 # -----------------------------
 # Model outputs
 # -----------------------------
-# models/
+# models1/
 # checkpoints/
 # *.h5
 # *.pt

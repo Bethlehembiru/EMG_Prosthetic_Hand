@@ -8,34 +8,35 @@ class WindowSegmenter:
         self.reject_label = reject_label
 
     def segment(self, signal, labels=None):
-        """
-        Works for:
-        - Training (labels provided)
-        - Inference (labels=None)
-        """
-
         windows = []
         window_labels = []
+
+        rejected_stats = {
+            "transition_rejected": 0,
+            "mixed_label_rejected": 0,
+            "total_windows": 0
+        }
 
         start = 0
 
         while start + self.window_size <= len(signal):
             end = start + self.window_size
-            window = signal[start:end]
 
-            # -------------------------
-            # TRAINING MODE (with labels)
-            # -------------------------
+            window = signal[start:end]
+            rejected_stats["total_windows"] += 1
+
             if labels is not None:
                 window_lbl = labels[start:end]
 
-                # Reject transition
+                # reject transition regions
                 if self.reject_label in window_lbl:
+                    rejected_stats["transition_rejected"] += 1
                     start += self.step_size
                     continue
 
-                # Reject mixed labels
+                # reject mixed-label windows
                 if len(np.unique(window_lbl)) > 1:
+                    rejected_stats["mixed_label_rejected"] += 1
                     start += self.step_size
                     continue
 
@@ -43,16 +44,16 @@ class WindowSegmenter:
                 windows.append(window)
                 window_labels.append(final_label)
 
-            # -------------------------
-            # INFERENCE MODE (no labels)
-            # -------------------------
             else:
                 windows.append(window)
 
             start += self.step_size
 
-        # Return format depends on mode
         if labels is not None:
-            return np.array(windows), np.array(window_labels)
-        else:
-            return np.array(windows), None
+            return (
+                np.asarray(windows),
+                np.asarray(window_labels),
+                rejected_stats
+            )
+
+        return np.asarray(windows), None, rejected_stats
