@@ -3,29 +3,138 @@ import time
 
 
 class HandController:
-    def __init__(self, port="COM3", baudrate=115200, timeout=1):
-        self.ser = serial.Serial(port, baudrate, timeout=timeout)
+
+    def __init__(
+        self,
+        port="COM3",
+        baudrate=9600,
+        timeout=1,
+        min_command_interval=0.05
+    ):
+
+        # =====================================================
+        # SERIAL CONNECTION
+        # =====================================================
+        self.ser = serial.Serial(
+            port,
+            baudrate,
+            timeout=timeout
+        )
+
         time.sleep(2)
 
-        # Full gesture → multi-servo mapping
+        # flush startup garbage
+        self.ser.reset_input_buffer()
+
+        # =====================================================
+        # TIMING CONTROL
+        # =====================================================
+        self.last_send_time = 0
+        self.min_command_interval = min_command_interval
+
+        self.last_prediction = None
+
+        # =====================================================
+        # GESTURE MAP (5 motors)
+        # =====================================================
         self.gesture_map = {
-            0: {"thumb": 90, "index": 90, "multi": 90},   # Rest
-            1: {"thumb": 0, "index": 0, "multi": 0},       # Close
-            2: {"thumb": 180, "index": 180, "multi": 180}, # Open
-            3: {"thumb": 45, "index": 0, "multi": 90}      # Point
+
+            0: {  # REST
+                "thumb": 90,
+                "index": 90,
+                "middle": 90,
+                "ring": 90,
+                "pinky": 90
+            },
+
+            1: {  # CLOSE
+                "thumb": 0,
+                "index": 0,
+                "middle": 0,
+                "ring": 0,
+                "pinky": 0
+            },
+
+            2: {  # OPEN
+                "thumb": 180,
+                "index": 180,
+                "middle": 180,
+                "ring": 180,
+                "pinky": 180
+            },
+
+            3: {  # POINT
+                "thumb": 45,
+                "index": 180,
+                "middle": 0,
+                "ring": 0,
+                "pinky": 0
+            }
         }
 
+        print("\nHand Controller Connected")
+        print(f"Port: {port}")
+        print(f"Baudrate: {baudrate}")
+
+    # =====================================================
+    # SEND GESTURE
+    # =====================================================
     def send_gesture(self, prediction):
+
         if prediction not in self.gesture_map:
             return
 
-        gesture = self.gesture_map[prediction]
+        # avoid spam repetition
+        if prediction == self.last_prediction:
+            return
 
-        # Send as a structured string
-        command = f"{gesture['thumb']},{gesture['index']},{gesture['multi']}\n"
-        self.ser.write(command.encode())
+        # rate limit
+        current_time = time.time()
+        if current_time - self.last_send_time < self.min_command_interval:
+            return
 
-        print(f"Prediction: {prediction} → {gesture}")
+        g = self.gesture_map[prediction]
 
+        thumb = g["thumb"]
+        index = g["index"]
+        middle = g["middle"]
+        ring = g["ring"]
+        pinky = g["pinky"]
+
+        # =====================================================
+        # IMPORTANT: PREFIX "C:"
+        # =====================================================
+        command = f"C:{thumb},{index},{middle},{ring},{pinky}\n"
+
+        try:
+            self.ser.write(command.encode())
+
+            self.last_prediction = prediction
+            self.last_send_time = current_time
+
+            print(f"[CMD] {prediction} -> {command.strip()}")
+
+        except Exception as e:
+            print("Serial write error:", e)
+
+    # =====================================================
+    # OPTIONAL MANUAL CONTROL
+    # =====================================================
+    def send_angles(self, thumb, index, middle, ring, pinky):
+
+        command = f"C:{thumb},{index},{middle},{ring},{pinky}\n"
+
+        try:
+            self.ser.write(command.encode())
+            print("[MANUAL]", command.strip())
+
+        except Exception as e:
+            print("Serial write error:", e)
+
+    # =====================================================
+    # CLOSE
+    # =====================================================
     def close(self):
-        self.ser.close()
+        if self.ser.is_open:
+            self.ser.close()
+            print("Serial connection closed")

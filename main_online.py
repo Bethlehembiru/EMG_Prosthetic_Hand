@@ -1,82 +1,150 @@
 import time
+import serial
+import joblib
+import numpy as np
 
-# Core modules
-from SEMG.acquisition.serial_reader import EMGSerialReader
-from SEMG.buffer.buffer import EMGBuffer
-from SEMG.pre_processing.filters import EMGFilter
-from SEMG.pre_processing.window import WindowSegmenter
+from collections import deque
+
 from SEMG.features.extractor import EMGFeatureExtractor
-
-# Model
-from joblib import load
-
-
+from SEMG.pre_processing.filters import EMGFilter
 from SEMG.control.hand_control import HandController
 
 
-# ----------------------------
-# Load trained model
-# ----------------------------
-model = load("models1/svm.joblib")  # or lda / knn
+# =========================================================
+# SETTINGS
+# =========================================================
+MODEL_PATH = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\models_loso\best_model.joblib"
+
+SERIAL_PORT = "COM3"
+BAUDRATE = 9600
+
+FS = 1000
+WINDOW_SIZE = 250
+STEP_SIZE = 125   # 50% overlap
+
+SMOOTHING = 5
 
 
-# ----------------------------
-# Initialize components
-# ----------------------------
-reader = EMGSerialReader()
-buffer = EMGBuffer(max_size=10000)
-filter_ = EMGFilter()
-windower = WindowSegmenter(window_size=250, overlap=0.5)
-feature_extractor = EMGFeatureExtractor()
-
-# Hand controller (Arduino bridge)
-controller = HandController(port="COM3")
+# =========================================================
+# LOAD MODEL
+# =========================================================
+print("Loading model...")
+model = joblib.load(MODEL_PATH)
+print("Model loaded.")
 
 
-# ----------------------------
-# Real-time loop
-# ----------------------------
-print("Starting real-time EMG control...\n")
+# =========================================================
+# PIPELINE OBJECTS
+# =========================================================
+filter_bank = EMGFilter(fs=FS)
+extractor = EMGFeatureExtractor(fs=FS)
+
+controller = HandController(
+    port=SERIAL_PORT,
+    baudrate=BAUDRATE
+)
+
+
+# =========================================================
+# SERIAL CONNECTION
+# =========================================================
+ser = serial.Serial(SERIAL_PORT, BAUDRATE, timeout=1)
+time.sleep(2)
+
+ser.reset_input_buffer()
+
+print("Connected to EMG stream.")
+
+
+# =========================================================
+# BUFFERS
+# =========================================================
+buffer = deque(maxlen=WINDOW_SIZE * 5)
+pred_buffer = deque(maxlen=SMOOTHING)
+
+sample_counter = 0
+
+
+# =========================================================
+# STREAM LOOP
+# =========================================================
+print("\nRunning online inference...\n")
 
 try:
     while True:
-        # 1. Read signal
-        sample = reader.read_sample()
 
-        # 2. Buffer it
-        buffer.add_sample(sample)
+        line = ser.readline().decode(errors="ignore").strip()
 
-        # 3. Wait for enough data
-        if buffer.size() < windower.window_size:
+        if not line:
             continue
 
-        data = buffer.get_data()
-
-        # 4. Filtering
-        filtered = filter_.apply(data)
-
-        # 5. Windowing
-        windows, _ = windower.segment(filtered)
-
-        if len(windows) == 0:
+        # =====================================================
+        # ONLY ACCEPT EMG LINES (IMPORTANT)
+        # =====================================================
+        if not line.startswith("E:"):
             continue
 
-        # 6. Feature extraction
-        features_batch = feature_extractor.extract(windows)
+        try:
+            sample = float(line.replace("E:", ""))
+        except:
+            continue
 
-        # 7. Prediction + control
-        # Use only the latest window to avoid spamming
-        features = features_batch[-1]
+        buffer.append(sample)
+        sample_counter += 1
 
-        pred = model.predict(features.reshape(1, -1))[0]
+        # wait until enough data
+        if len(buffer) < WINDOW_SIZE:
+            continue
 
-        print("Final Prediction:", pred)
+        # step control
+        if sample_counter < STEP_SIZE:
+            continue
 
-        # Ignore transition class if used
-        if pred != -1:
-            controller.send_gesture(pred)
+        sample_counter = 0
 
-        time.sleep(0.01)
+        # =====================================================
+        # GET WINDOW (latest segment only)
+        # =====================================================
+        window = np.array(list(buffer)[-WINDOW_SIZE:])
+
+        # =====================================================
+        # FILTERING (same as training pipeline)
+        # =====================================================
+        filtered, rectified, envelope = filter_bank.apply(
+            window,
+            return_signals=("filtered", "rectified", "envelope")
+        )
+
+        # =====================================================
+        # FEATURE EXTRACTION (31 features)
+        # =====================================================
+        features = extractor.extract(
+            filtered.reshape(1, -1),
+            rectified.reshape(1, -1),
+            envelope.reshape(1, -1)
+        )
+
+        # =====================================================
+        # PREDICTION
+        # =====================================================
+        pred = model.predict(features)[0]
+
+        pred_buffer.append(pred)
+
+        final_pred = max(set(pred_buffer), key=pred_buffer.count)
+
+        print(f"Raw: {pred} | Smoothed: {final_pred}")
+
+        # =====================================================
+        # SEND TO ARDUINO (C: prefix handled in controller)
+        # =====================================================
+        controller.send_gesture(final_pred)
+
 
 except KeyboardInterrupt:
-    print("\nStopped.")
+    print("\nStopping...")
+
+finally:
+    ser.close()
+    controller.close()
+    print("Closed.")

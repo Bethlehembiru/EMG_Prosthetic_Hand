@@ -2,7 +2,7 @@ import numpy as np
 
 
 class WindowSegmenter:
-    def __init__(self, window_size=250, overlap=0.5, reject_label=-1):
+    def __init__(self, window_size=300, overlap=0.5, reject_label=-1):
         self.window_size = window_size
         self.step_size = int(window_size * (1 - overlap))
         self.reject_label = reject_label
