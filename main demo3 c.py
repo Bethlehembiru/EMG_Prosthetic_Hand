@@ -21,8 +21,8 @@ from SEMG.classification.QDA import get_qda
 # =========================================================
 # PATHS
 # =========================================================
-FEATURE_DIR = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\data\features"
-SAVE_DIR = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\models_loso"
+FEATURE_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\features2"
+SAVE_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\models_loso2"
 
 os.makedirs(SAVE_DIR, exist_ok=True)
 
