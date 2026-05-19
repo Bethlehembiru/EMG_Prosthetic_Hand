@@ -48,26 +48,26 @@ class HandController:
             },
 
             1: {  # CLOSE
-                "thumb": 0,
-                "index": 0,
+                "thumb": 180,
+                "index": 180,
                 "middle": 0,
-                "ring": 0,
+                "ring": 180,
                 "pinky": 0
             },
 
             2: {  # OPEN
-                "thumb": 180,
-                "index": 180,
+                "thumb": 0,
+                "index": 0,
                 "middle": 180,
-                "ring": 180,
+                "ring": 0,
                 "pinky": 180
             },
 
             3: {  # POINT
-                "thumb": 45,
-                "index": 180,
+                "thumb": 180,
+                "index": 0,
                 "middle": 0,
-                "ring": 0,
+                "ring": 180,
                 "pinky": 0
             }
         }
