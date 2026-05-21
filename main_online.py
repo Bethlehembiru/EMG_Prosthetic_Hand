@@ -13,9 +13,9 @@ from SEMG.control.hand_control import HandController
 # =========================================================
 # SETTINGS
 # =========================================================
-MODEL_PATH = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\models_loso\best_model.joblib"
+MODEL_PATH = r"C:\Users\lukma\Desktop\hand\EMG_Prosthetic_Hand\model_train_test2\best_model.joblib"
 
-SERIAL_PORT = "COM3"
+SERIAL_PORT = "COM4"
 BAUDRATE = 9600
 
 FS = 1000

@@ -6,7 +6,7 @@ class HandController:
 
     def __init__(
         self,
-        port="COM3",
+        port="COM4",
         baudrate=9600,
         timeout=1,
         min_command_interval=0.05

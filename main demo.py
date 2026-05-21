@@ -6,8 +6,8 @@ from SEMG.pre_processing.filters import EMGFilter
 # =========================
 # PATHS
 # =========================
-BASE_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\raw"
-SAVE_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\processed"
+BASE_DIR = r"C:\Users\lukma\Desktop\hand\EMG_Prosthetic_Hand\data\raw"
+SAVE_DIR = r"C:\Users\lukma\Desktop\hand\EMG_Prosthetic_Hand\data\processed"
 
 os.makedirs(SAVE_DIR, exist_ok=True)
 

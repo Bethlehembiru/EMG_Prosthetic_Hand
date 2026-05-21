@@ -9,8 +9,8 @@ from SEMG.features.extractor import EMGFeatureExtractor
 # =====================================================
 # PATHS
 # =====================================================
-DATA_DIR = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\data\processed"
-SAVE_DIR = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\data\features"
+DATA_DIR = r"C:\Users\lukma\Desktop\hand\EMG_Prosthetic_Hand\data\processed"
+SAVE_DIR = r"C:\Users\lukma\Desktop\hand\EMG_Prosthetic_Hand\data\features3"
 
 os.makedirs(SAVE_DIR, exist_ok=True)
 
