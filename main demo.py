@@ -6,8 +6,9 @@ from SEMG.pre_processing.filters import EMGFilter
 # =========================
 # PATHS
 # =========================
-BASE_DIR = r"C:\Users\lukma\Desktop\hand\EMG_Prosthetic_Hand\data\raw2"
-SAVE_DIR = r"C:\Users\lukma\Desktop\hand\EMG_Prosthetic_Hand\data\processed"
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.join(PROJECT_ROOT, "data", "raw")
+SAVE_DIR = os.path.join(PROJECT_ROOT, "data", "processed77")
 
 os.makedirs(SAVE_DIR, exist_ok=True)
 
@@ -20,36 +21,30 @@ emg_filter = EMGFilter(fs=1000)
 # PROCESS PARTICIPANTS
 # =========================
 for participant_folder in os.listdir(BASE_DIR):
-
     participant_path = os.path.join(BASE_DIR, participant_folder)
 
     if not os.path.isdir(participant_path):
         continue
 
     participant_id = participant_folder.split("_")[-1]
-
     print(f"\n=== Processing Participant {participant_id} ===")
 
     for file in os.listdir(participant_path):
-
         if not file.endswith(".npz"):
             continue
 
         file_path = os.path.join(participant_path, file)
-
         print(f"Processing: {file}")
 
         data = np.load(file_path)
-
         signal = data["data"]
         labels = data["labels"]
-
         gesture = file.split("_")[0]
 
         # =========================
-        # FILTERING
+        # FILTERING (Only extract filtered array)
         # =========================
-        filtered, rectified, envelope = emg_filter.apply(
+        filtered, _, _ = emg_filter.apply(
             signal,
             return_signals=("filtered", "rectified", "envelope")
         )
@@ -61,11 +56,10 @@ for participant_folder in os.listdir(BASE_DIR):
             SAVE_DIR,
             f"participant_{participant_id}"
         )
-
         os.makedirs(participant_save_path, exist_ok=True)
 
         # =========================
-        # SAVE FILE
+        # SAVE FILE (Only keeping what matters)
         # =========================
         save_file = os.path.join(
             participant_save_path,
@@ -74,14 +68,9 @@ for participant_folder in os.listdir(BASE_DIR):
 
         np.savez(
             save_file,
-
             filtered=filtered,
-            rectified=rectified,
-            envelope=envelope,
-
             labels=labels
         )
-
         print(f"Saved → {save_file}")
 
 print("\nAll participants processed successfully.")

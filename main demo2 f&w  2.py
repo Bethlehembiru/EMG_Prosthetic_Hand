@@ -5,15 +5,14 @@ from collections import defaultdict
 from SEMG.pre_processing.window import WindowSegmenter
 from SEMG.features.extractor import EMGFeatureExtractor
 
-
 # =====================================================
 # PATHS
 # =====================================================
-DATA_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\processed"
-SAVE_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\features2"
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data", "processed77")
+SAVE_DIR = os.path.join(PROJECT_ROOT, "data", "features77")
 
 os.makedirs(SAVE_DIR, exist_ok=True)
-
 
 # =====================================================
 # WINDOWING + FEATURE EXTRACTION
@@ -23,8 +22,8 @@ segmenter = WindowSegmenter(
     overlap=0.5
 )
 
-extractor = EMGFeatureExtractor(fs=1000)
-
+# No fs=1000 needed as frequency features are removed
+extractor = EMGFeatureExtractor()
 
 # =====================================================
 # GLOBAL STATISTICS
@@ -32,12 +31,10 @@ extractor = EMGFeatureExtractor(fs=1000)
 global_class_counts = defaultdict(int)
 global_rejection_stats = []
 
-
 # =====================================================
 # PROCESS PARTICIPANTS
 # =====================================================
 for participant_folder in sorted(os.listdir(DATA_DIR)):
-
     participant_path = os.path.join(DATA_DIR, participant_folder)
 
     if not os.path.isdir(participant_path):
@@ -53,79 +50,38 @@ for participant_folder in sorted(os.listdir(DATA_DIR)):
     # PROCESS FILES
     # =================================================
     for file in sorted(os.listdir(participant_path)):
-
         if not file.endswith(".npz"):
             continue
 
         path = os.path.join(participant_path, file)
         data = np.load(path)
 
-        # =================================================
-        # LOAD SIGNALS (ALL PRECOMPUTED)
-        # =================================================
+        # Only load the base filtered signal and labels
         filtered = data.get("filtered")
-        rectified = data.get("rectified")
-        envelope = data.get("envelope")
         labels = data.get("labels")
 
-        # =================================================
-        # SAFETY CHECK
-        # =================================================
-        if filtered is None or rectified is None or labels is None:
+        # Safety Check
+        if filtered is None or labels is None:
             print(f"Skipping corrupted file: {file}")
             continue
 
         # =================================================
-        # WINDOWING
+        # WINDOWING (Single stream processing)
         # =================================================
         filtered_windows, win_labels, stats = segmenter.segment(
             filtered,
             labels
         )
-
-        rectified_windows, _, _ = segmenter.segment(
-            rectified,
-            labels
-        )
-
-        # envelope fallback (safe handling)
-        if envelope is not None:
-            envelope_windows, _, _ = segmenter.segment(
-                envelope,
-                labels
-            )
-        else:
-            envelope_windows = np.mean(
-                rectified_windows,
-                axis=1,
-                keepdims=True
-            )
-
         participant_reject_stats.append(stats)
 
-        # =================================================
-        # VALIDITY CHECK
-        # =================================================
+        # Validity Check
         if len(filtered_windows) == 0:
             continue
 
-        if not (
-            len(filtered_windows)
-            == len(rectified_windows)
-            == len(envelope_windows)
-            == len(win_labels)
-        ):
-            print(f"Window mismatch detected in {file}")
-            continue
-
         # =================================================
-        # FEATURE EXTRACTION
+        # FEATURE EXTRACTION (Outputs the 4 clean features)
         # =================================================
-        features = extractor.extract(
-            filtered_windows,
-            rectified_windows,
-            envelope_windows
-        )
+        features = extractor.extract(filtered_windows)
 
         if features.shape[0] == 0:
             continue
@@ -140,7 +96,7 @@ for participant_folder in sorted(os.listdir(DATA_DIR)):
             global_class_counts[int(lbl)] += 1
 
     # =====================================================
-    # PARTICIPANT VALIDATION
+    # PARTICIPANT VALIDATION AND SAVE
     # =====================================================
     if len(X_all) == 0:
         print("No valid data for participant")
@@ -149,9 +105,6 @@ for participant_folder in sorted(os.listdir(DATA_DIR)):
     X_all = np.vstack(X_all)
     y_all = np.concatenate(y_all)
 
-    # =====================================================
-    # SAVE
-    # =====================================================
     save_path = os.path.join(
         SAVE_DIR,
         f"{participant_folder}_features.npz"
@@ -160,23 +113,19 @@ for participant_folder in sorted(os.listdir(DATA_DIR)):
     np.savez(save_path, X=X_all, y=y_all)
 
     print(f"Saved → {save_path}")
-    print("X shape:", X_all.shape)
+    print("X shape:", X_all.shape, "(Should display 4 features)")
     print("y shape:", y_all.shape)
 
     global_rejection_stats.extend(participant_reject_stats)
-
 
 # =====================================================
 # FINAL REPORTING
 # =====================================================
 print("\n=== CLASS DISTRIBUTION ===")
-
 for k, v in sorted(global_class_counts.items()):
     print(f"Class {k}: {v} samples")
 
-
 print("\n=== AVERAGE REJECTION STATS ===")
-
 avg_transition = np.mean([s["transition_rejected"] for s in global_rejection_stats])
 avg_mixed = np.mean([s["mixed_label_rejected"] for s in global_rejection_stats])
 
