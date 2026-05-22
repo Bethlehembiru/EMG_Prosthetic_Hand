@@ -21,8 +21,8 @@ from SEMG.classification.QDA import get_qda
 # =========================================================
 # PATHS
 # =========================================================
-FEATURE_DIR = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\data\features_multi\mixed"
-SAVE_DIR = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\models\loso"
+FEATURE_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\features2"
+SAVE_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\models_loso2"
 
 os.makedirs(SAVE_DIR, exist_ok=True)
 
@@ -59,6 +59,44 @@ groups = np.array(groups)
 print("\nFINAL DATASET")
 print("X:", X_all.shape)
 print("y:", y_all.shape)
+
+
+# =========================================================
+# PCA FUNCTION
+# =========================================================
+def plot_pca(X, y, title):
+    X_scaled = StandardScaler().fit_transform(X)
+
+    pca = PCA(n_components=2)
+    X_pca = pca.fit_transform(X_scaled)
+
+    plt.figure(figsize=(7, 6))
+
+    for label in np.unique(y):
+        idx = y == label
+        plt.scatter(X_pca[idx, 0], X_pca[idx, 1], s=12, label=f"Class {label}")
+
+    plt.title(title)
+    plt.xlabel("PC1")
+    plt.ylabel("PC2")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+
+# =========================================================
+# FEATURE SPLITS
+# =========================================================
+filtered_X = X_all[:, 0:14]
+rectified_X = X_all[:, 14:26]
+envelope_X = X_all[:, 26:31]
+
+
+print("\nGenerating PCA plots...")
+plot_pca(X_all, y_all, "PCA - Full Feature Set")
+plot_pca(filtered_X, y_all, "PCA - Filtered Features")
+plot_pca(rectified_X, y_all, "PCA - Rectified Features")
+plot_pca(envelope_X, y_all, "PCA - Envelope Features")
 
 
 # =========================================================
@@ -104,6 +142,7 @@ for fold, (train_idx, test_idx) in enumerate(logo.split(X_all, y_all, groups), 1
     # =====================================================
     svm_pipeline = Pipeline([
         ("scaler", StandardScaler()),
+        ("pca", PCA(n_components=0.95)),
         ("model", SVC(kernel="rbf", class_weight="balanced"))
     ])
 
@@ -127,11 +166,19 @@ for fold, (train_idx, test_idx) in enumerate(logo.split(X_all, y_all, groups), 1
     # =====================================================
     # OTHER MODELS
     # =====================================================
-    lda_model = Pipeline([("scaler", StandardScaler()), ("model", get_lda())])
-    knn_model = Pipeline([("scaler", StandardScaler()), ("model", get_knn())])
-    rf_model  = Pipeline([("scaler", StandardScaler()), ("model", get_rf())])
-    gb_model  = Pipeline([("scaler", StandardScaler()), ("model", get_gb())])
-    qda_model = Pipeline([("scaler", StandardScaler()), ("model", get_qda())])
+    lda_model = Pipeline([
+        ("scaler", StandardScaler()),
+        ("pca", PCA(n_components=0.95)),
+        ("model", get_lda())
+    ])
+    knn_model = Pipeline([
+        ("scaler", StandardScaler()),
+        ("pca", PCA(n_components=0.95)),
+        ("model", get_knn())
+    ])
+    rf_model  = Pipeline([("scaler", StandardScaler()), "pca", PCA(n_components=0.95), ("model", get_rf())])
+    gb_model  = Pipeline([("scaler", StandardScaler()), "pca", PCA(n_components=0.95), ("model", get_gb())])
+    qda_model = Pipeline([("scaler", StandardScaler()), "pca", PCA(n_components=0.95), ("model", get_qda())])
 
     models = {
         "SVM": svm_model,
@@ -221,4 +268,4 @@ model_builder = {
 
 best_model = model_builder[best_model_name_final]
 
-joblib.dump(best_model, os.path.join(SAVE_DIR, "best_model_multi.joblib"))
+joblib.dump(best_model, os.path.join(SAVE_DIR, "best_model_multi_normalized.joblib"))
