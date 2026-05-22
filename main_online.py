@@ -116,7 +116,7 @@ try:
         )
 
         # =====================================================
-        # FEATURE EXTRACTION (31 features)
+        # FEATURE EXTRACTION (31 features_close_normalized)
         # =====================================================
         features = extractor.extract(
             filtered.reshape(1, -1),

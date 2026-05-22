@@ -6,14 +6,14 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 # ==============================
 # SETTINGS
 # ==============================
-FEATURES_DIR = "data/features"  # where your test feature files are stored
+FEATURES_DIR = "data/features_close_normalized"  # where your test feature files are stored
 MODEL_PATH = "data/models1/classifier.joblib"
 SCALER_PATH = "data/models1/scaler.joblib"
 
 # ==============================
 # LOAD TEST DATA
 # ==============================
-# Assuming you saved test features as X_test.npy and y_test.npy
+# Assuming you saved test features_close_normalized as X_test.npy and y_test.npy
 X_test = np.load(os.path.join(FEATURES_DIR, "X_test.npy"))
 y_test = np.load(os.path.join(FEATURES_DIR, "y_test.npy"))
 

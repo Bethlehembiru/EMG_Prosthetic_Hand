@@ -1,6 +1,6 @@
 import numpy as np
 
-data = np.load('C:\\Users\\HP\\OneDrive\\Desktop\\EMG_Prosthetic_Hand\\data\\raw\\participant_2\\close_1778058269.npz')
+data = np.load('C:\\Users\\hp\\PycharmProjects\\EMG_Prosthetic_Hand\\data\\features_multi\\filtered\\participant_BT1_features.npz')
 
 
 np.set_printoptions(threshold=np.inf)

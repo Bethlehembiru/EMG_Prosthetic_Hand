@@ -2,10 +2,13 @@ import numpy as np
 
 
 class WindowSegmenter:
-    def __init__(self, window_size=300, overlap=0.5, reject_label=-1):
+    def __init__(self, window_size, overlap, reject_label=-1):
         self.window_size = window_size
-        self.step_size = int(window_size * (1 - overlap))
+        self.overlap = overlap
         self.reject_label = reject_label
+
+    def _compute_step(self):
+        return max(1, int(self.window_size * (1 - self.overlap)))
 
     def segment(self, signal, labels=None):
         windows = []
@@ -17,9 +20,12 @@ class WindowSegmenter:
             "total_windows": 0
         }
 
-        start = 0
+        step_size = self._compute_step()
 
-        while start + self.window_size <= len(signal):
+        start = 0
+        n = len(signal)
+
+        while start + self.window_size <= n:
             end = start + self.window_size
 
             window = signal[start:end]
@@ -31,23 +37,22 @@ class WindowSegmenter:
                 # reject transition regions
                 if self.reject_label in window_lbl:
                     rejected_stats["transition_rejected"] += 1
-                    start += self.step_size
+                    start += step_size
                     continue
 
                 # reject mixed-label windows
                 if len(np.unique(window_lbl)) > 1:
                     rejected_stats["mixed_label_rejected"] += 1
-                    start += self.step_size
+                    start += step_size
                     continue
 
-                final_label = window_lbl[0]
                 windows.append(window)
-                window_labels.append(final_label)
+                window_labels.append(window_lbl[0])
 
             else:
                 windows.append(window)
 
-            start += self.step_size
+            start += step_size
 
         if labels is not None:
             return (

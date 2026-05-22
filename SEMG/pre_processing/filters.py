@@ -40,7 +40,7 @@ class EMGFilter:
     # -----------------------------
     def apply(self, signal, return_signals=("envelope",)):
         """
-        signal: 1D numpy array of raw EMG
+        signal: 1D numpy array of raw_3_gestures EMG
 
         return_signals: tuple of:
             "filtered", "rectified", "envelope"

@@ -3,14 +3,14 @@ import os
 from collections import defaultdict
 
 from SEMG.pre_processing.window import WindowSegmenter
-from SEMG.features.extractor import EMGFeatureExtractor
+from SEMG.features.enveloped_extractor import EnvelopeFeatureExtractor
 
 
 # =====================================================
 # PATHS
 # =====================================================
-DATA_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\processed"
-SAVE_DIR = r"C:\Users\HP\OneDrive\Desktop\EMG_Prosthetic_Hand\data\features2"
+DATA_DIR = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\data\processed_close"
+SAVE_DIR = r"C:\Users\hp\PycharmProjects\EMG_Prosthetic_Hand\data\features_close\enveloped"
 
 os.makedirs(SAVE_DIR, exist_ok=True)
 
@@ -23,7 +23,7 @@ segmenter = WindowSegmenter(
     overlap=0.5
 )
 
-extractor = EMGFeatureExtractor(fs=1000)
+extractor = EnvelopeFeatureExtractor(fs=1000)
 
 
 # =====================================================
@@ -122,10 +122,7 @@ for participant_folder in sorted(os.listdir(DATA_DIR)):
         # FEATURE EXTRACTION
         # =================================================
         features = extractor.extract(
-            filtered_windows,
-            rectified_windows,
-            envelope_windows
-        )
+            envelope_windows)
 
         if features.shape[0] == 0:
             continue

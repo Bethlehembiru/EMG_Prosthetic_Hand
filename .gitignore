@@ -48,7 +48,7 @@ Thumbs.db
 
 # -----------------------------
 # Data files (optional – for EMG experiments)
-# Uncomment if you don't want raw data in Git
+# Uncomment if you don't want raw_3_gestures data in Git
 # -----------------------------
 # data/
 # recordings/
