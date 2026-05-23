@@ -10,7 +10,7 @@ class HandController:
     ):
 
         # =====================================================
-        # SHARED SERIAL CONNECTION
+        # SHARED SERIAL CONNECTIO
         # =====================================================
         self.ser = serial_connection
 
