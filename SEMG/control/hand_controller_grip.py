@@ -27,14 +27,6 @@ class HandController:
         # =====================================================
         self.gesture_map = {
 
-            0: {  # REST
-                "thumb": 90,
-                "index": 90,
-                "middle": 90,
-                "ring": 90,
-                "pinky": 90
-            },
-
             1: {  # CLOSE
                 "thumb": 180,
                 "index": 180,
@@ -43,21 +35,14 @@ class HandController:
                 "pinky": 0
             },
 
-            2: {  # OPEN
+            0:  {  # rest
                 "thumb": 0,
                 "index": 0,
                 "middle": 180,
                 "ring": 0,
                 "pinky": 180
             },
-
-            3: {  # POINT
-                "thumb": 180,
-                "index": 0,
-                "middle": 0,
-                "ring": 180,
-                "pinky": 0
-            }
+ 
         }
 
         print("\nHand Controller Ready")
