@@ -13,7 +13,7 @@ from SEMG.control.hand_controller_grip import HandController
 # =========================================================
 # SETTINGS
 # =========================================================
-MODEL_PATH = r"C:\Users\lukma\Desktop\hand\EMG_Prosthetic_Hand\models\split\best_model_close.joblib"
+MODEL_PATH = r"C:\Users\lukma\Desktop\hand\EMG_Prosthetic_Hand\models\best_qda_model.joblib"
 
 SERIAL_PORT = "COM4"
 BAUDRATE = 9600
@@ -25,7 +25,7 @@ WINDOW_SIZE = 150
 STEP_SIZE = 75
 
 # smoothing
-SMOOTHING = 3
+SMOOTHING = 1
 
 
 # =========================================================
@@ -145,13 +145,61 @@ try:
         )
 
         # =====================================================
-        # FEATURE EXTRACTION
+        # FEATURE EXTRACTION (MATCH TRAINING)
+        # FEATURES:
+        # MAV, WL, ZC, SSC
         # =====================================================
-        features = extractor.extract(
-            filtered.reshape(1, -1),
-            rectified.reshape(1, -1),
-            envelope.reshape(1, -1)
+
+        # ---------- MAV ----------
+        mav = np.mean(np.abs(rectified))
+
+        # ---------- WL ----------
+        wl = np.sum(np.abs(np.diff(filtered)))
+
+        # ---------- ZC ----------
+        zc_threshold = 0.01
+
+        zc = np.sum(
+            (
+                (filtered[:-1] * filtered[1:]) < 0
+            ) &
+            (
+                np.abs(filtered[:-1] - filtered[1:]) >= zc_threshold
+            )
         )
+
+        # ---------- SSC ----------
+        ssc_threshold = 0.01
+
+        diff1 = np.diff(filtered)
+
+        ssc = np.sum(
+            (
+                (diff1[:-1] * diff1[1:]) < 0
+            ) &
+            (
+                np.abs(diff1[:-1] - diff1[1:]) >= ssc_threshold
+            )
+        )
+
+        # =====================================================
+        # FINAL FEATURE VECTOR
+        # IMPORTANT:
+        # MUST MATCH TRAINING ORDER EXACTLY
+        # =====================================================
+
+        features = np.array([
+            mav,
+            wl,
+            zc,
+            ssc
+        ], dtype=np.float32).reshape(1, -1)
+
+        # =====================================================
+        # PREDICTION
+        # =====================================================
+
+        pred = model.predict(features)[0]
 
         # =====================================================
         # PREDICTION
